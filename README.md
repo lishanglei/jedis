@@ -85,7 +85,7 @@
    5. ###### 启动服务端
 
       src/redis-server
-      ![image-20200811171341364](D:\mingbyte\typora\image-20200811171341364.png)
+      ![image text](D:\mingbyte\typora\image-20200811171341364.png)
 
    6. ###### 启动客户端
 
@@ -126,174 +126,179 @@
    - 那么为什么任意一个节点挂了且没有从节点就代表这个集群挂了呢?因为集群内设置了16384个hash slot(哈希槽),并且把所有的物理节点银蛇到这16384[0,16383]个solt上,或者说把这些solt均等分给各个节点.当需要在Redis集群存放一个数据(key-value)时,redis会先对这个key进行crc16算法,然后得到一个结果,在把这个结果对16384取余,这个余数就会对应[0-16383]其中的一个槽,进而决定key-value存储到哪个节点中.所以一旦某个节点挂了,该节点对应的slot就无法使用,那么就会导致集群无法正常工作
    - 综上所述,每个Redis集群理论上最多可以有16384个节点.
 
-10. ##### redis集群搭建
+10.1. ##### 
 
-    | id   | 端口 | 备注   |
-    | ---- | ---- | ------ |
-    | 1    | 8001 | 主节点 |
-    | 2    | 8002 | 主节点 |
-    | 3    | 8003 | 主节点 |
-    | 4    | 8004 | 从节点 |
-    | 5    | 8005 | 从节点 |
-    | 6    | 8006 | 从节点 |
-    |      |      |        |
+   | id   | 端口 | 备注   |
+   | ---- | ---- | ------ |
+   | 1    | 8001 | 主节点 |
+   | 2    | 8002 | 主节点 |
+   | 3    | 8003 | 主节点 |
+   | 4    | 8004 | 从节点 |
+   | 5    | 8005 | 从节点 |
+   | 6    | 8006 | 从节点 |
+   |      |      |        |
 
-    
+   
 
-    1. ###### 创建集群目录
+   1. ###### 创建集群目录
 
-       mkdir rediscluster
+      mkdir rediscluster
 
-    2. ###### 创建6个节点目录
+   2. ###### 创建6个节点目录
 
-       cd rediscluster 
+      cd rediscluster 
 
-       mkdir 8001 
+      mkdir 8001 
 
-    3. ###### 复制配置文件
+   3. ###### 复制配置文件
 
-       cp /usr/local/redis-5.0.8/redis.conf  ../rediscluster/8001
+      cp /usr/local/redis-5.0.8/redis.conf  ../rediscluster/8001
 
-    4. ###### 修改配置文件
+   4. ###### 修改配置文件
 
-       vim redis.conf
+      vim redis.conf
 
-       port 8001
+      port 8001
 
-       dir /usr/local/rediscluster/8001
+      dir /usr/local/rediscluster/8001
 
-       cluster-enabled yes
+      cluster-enabled yes
 
-       cluster-config-file nodes-8001.conf
+      cluster-config-file nodes-8001.conf
 
-       daemonize yes
+      daemonize yes
 
-       protected-mode no
+      protected-mode no
 
-       appendonly yes
-       requirepass 111111
+      appendonly yes
+      requirepass 111111
 
-       masterauth 111111
+      masterauth 111111
 
-    5. ###### 复制节点
+   5. ###### 复制节点
 
-       cp -r 8001/ 8002
+      cp -r 8001/ 8002
 
-       cp -r 8001/ 8003
+      cp -r 8001/ 8003
 
-       cp -r 8001/ 8004
+      cp -r 8001/ 8004
 
-       cp -r 8001/ 8005
+      cp -r 8001/ 8005
 
-       cp -r 8001/ 8006
+      cp -r 8001/ 8006
 
-    6. ###### 批量替换配置文件中的端口配置
+   6. ###### 批量替换配置文件中的端口配置
 
-       :%s/8001/8002/g
+      :%s/8001/8002/g
 
-       :%s/8001/8003/g
+      :%s/8001/8003/g
 
-       :%s/8001/8004/g
+      :%s/8001/8004/g
 
-       :%s/8001/8005/g
+      :%s/8001/8005/g
 
-       :%s/8001/8006/g
+      :%s/8001/8006/g
 
-    7. ###### 依据不同的配置文件启动redis集群
+   7. ###### 依据不同的配置文件启动redis集群
 
-       ./src/redis-server ../rediscluster/8001/redis.conf
+      ./src/redis-server ../rediscluster/8001/redis.conf
 
-       ./src/redis-server ../rediscluster/8002/redis.conf
+      ./src/redis-server ../rediscluster/8002/redis.conf
 
-       ./src/redis-server ../rediscluster/8003/redis.conf
+      ./src/redis-server ../rediscluster/8003/redis.conf
 
-       ./src/redis-server ../rediscluster/8004/redis.conf
+      ./src/redis-server ../rediscluster/8004/redis.conf
 
-       ./src/redis-server ../rediscluster/8005/redis.conf
+      ./src/redis-server ../rediscluster/8005/redis.conf
 
-       ./src/redis-server ../rediscluster/8006/redis.conf
+      ./src/redis-server ../rediscluster/8006/redis.conf
 
-    8. ###### 集群关联启动客户端
+   8. ###### 集群关联启动客户端
 
-       ./src/redis-cli -a 111111 --cluster create --cluster-replicas 1  192.168.5.62:8001 192.168.5.62:8002 192.168.5.62:8003 192.168.5.62:8004 192.168.5.62:8005 192.168.5.62:8006
+      ./src/redis-cli -a 111111 --cluster create --cluster-replicas 1  192.168.5.62:8001 192.168.5.62:8002 192.168.5.62:8003 192.168.5.62:8004 192.168.5.62:8005 192.168.5.62:8006
 
-       ![image-20200824163846942](D:\mingbyte\typora\image-20200824163846942.png)
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2020082417403883.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM0MDY5ODM5,size_16,color_FFFFFF,t_70#pic_center)
 
-    9. ###### 连接
 
-       ./src/redis-cli  -a 111111 -c -h 192.168.5.62 -p 8001
+   9. ###### 连接
 
-    10. ###### 使用java客户端jedis连接
+      ./src/redis-cli  -a 111111 -c -h 192.168.5.62 -p 8001
 
-        ```xml
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>3.0.1</version>
-        </dependency>
-        ```
+   10. ###### 使用java客户端jedis连接
 
-        ```java
-        public class RedisCluster {
-        
-            public static void main(String[] args) {
-        
-                Set<HostAndPort> clusterNodes =new HashSet<>();
-                clusterNodes.add(new HostAndPort("192.168.5.62",8001));
-                clusterNodes.add(new HostAndPort("192.168.5.62",8002));
-                clusterNodes.add(new HostAndPort("192.168.5.62",8003));
-                clusterNodes.add(new HostAndPort("192.168.5.62",8004));
-                clusterNodes.add(new HostAndPort("192.168.5.62",8005));
-                clusterNodes.add(new HostAndPort("192.168.5.62",8006));
-        
-                JedisPoolConfig jedisPoolConfig =new JedisPoolConfig();
-                jedisPoolConfig.setMaxTotal(100);
-                jedisPoolConfig.setMaxIdle(10);
-                jedisPoolConfig.setTestOnBorrow(true);
-        
-                JedisCluster jedisCluster =new JedisCluster(clusterNodes,6000,5000,10,"111111", jedisPoolConfig);
-                System.out.println(jedisCluster.set("name","zhangsan"));
-                System.out.println(jedisCluster.set("age","18"));
-                System.out.println(jedisCluster.get("name"));
-                System.out.println(jedisCluster.get("age"));
-                jedisCluster.close();
-            }
-        
-        }
-        ```
+       ```xml
+       <dependency>
+           <groupId>redis.clients</groupId>
+           <artifactId>jedis</artifactId>
+           <version>3.0.1</version>
+       </dependency>
+       ```
 
-    11. ###### 添加新节点
+       ```java
+       public class RedisCluster {
+       
+           public static void main(String[] args) {
+       
+               Set<HostAndPort> clusterNodes =new HashSet<>();
+               clusterNodes.add(new HostAndPort("192.168.5.62",8001));
+               clusterNodes.add(new HostAndPort("192.168.5.62",8002));
+               clusterNodes.add(new HostAndPort("192.168.5.62",8003));
+               clusterNodes.add(new HostAndPort("192.168.5.62",8004));
+               clusterNodes.add(new HostAndPort("192.168.5.62",8005));
+               clusterNodes.add(new HostAndPort("192.168.5.62",8006));
+       
+               JedisPoolConfig jedisPoolConfig =new JedisPoolConfig();
+               jedisPoolConfig.setMaxTotal(100);
+               jedisPoolConfig.setMaxIdle(10);
+               jedisPoolConfig.setTestOnBorrow(true);
+       
+               JedisCluster jedisCluster =new JedisCluster(clusterNodes,6000,5000,10,"111111", jedisPoolConfig);
+               System.out.println(jedisCluster.set("name","zhangsan"));
+               System.out.println(jedisCluster.set("age","18"));
+               System.out.println(jedisCluster.get("name"));
+               System.out.println(jedisCluster.get("age"));
+               jedisCluster.close();
+           }
+       
+       }
+       ```
 
-        复制配置文件后启动
+   11. ###### 添加新节点
 
-        ./src/redis-server ../rediscluster/8007/redis.conf
+       复制配置文件后启动
 
-        ./src/redis-cli -a 111111 --cluster add-node 192.168.5.62:8007 192.168.5.62:8001
+       ./src/redis-server ../rediscluster/8007/redis.conf
 
-        **查看节点信息**
+       ./src/redis-cli -a 111111 --cluster add-node 192.168.5.62:8007 192.168.5.62:8001
 
-        ./src/redis-cli -a 111111 -c -h 192.168.5.62 -p 8001
+       **查看节点信息**
 
-        ![image-20200824171430696](D:\mingbyte\typora\image-20200824171430696.png)
+       ./src/redis-cli -a 111111 -c -h 192.168.5.62 -p 8001
 
-        ./src/redis-cli -a 111111 --cluster reshard 192.168.5.62:8002
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200824174054925.png#pic_center)
 
-        #你想要从原集群移动多少节点至新节点
 
-        ![image-20200824171924790](D:\mingbyte\typora\image-20200824171924790.png)
+       ./src/redis-cli -a 111111 --cluster reshard 192.168.5.62:8002
 
-        #接收节点的id是多少
+       #你想要从原集群移动多少节点至新节点
 
-        ![image-20200824172042643](D:\mingbyte\typora\image-20200824172042643.png)
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200824174107915.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM0MDY5ODM5,size_16,color_FFFFFF,t_70#pic_center)
 
-        #从哪个源节点移出
+       #接收节点的id是多少
 
-        ![image-20200824172133092](D:\mingbyte\typora\image-20200824172133092.png)
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2020082417412112.png#pic_center)
 
-        输入done即添加新节点完成
 
-        ![image-20200824172212468](D:\mingbyte\typora\image-20200824172212468.png)
+       #从哪个源节点移出
 
-        新增加的节点已经分配到哈希槽了
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200824174128961.png#pic_center)
 
-        ![image-20200824172354212](D:\mingbyte\typora\image-20200824172354212.png)
+
+       输入done即添加新节点完成
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200824174137854.png#pic_center)
+
+
+       新增加的节点已经分配到哈希槽了
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200824174146761.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM0MDY5ODM5,size_16,color_FFFFFF,t_70#pic_center)
